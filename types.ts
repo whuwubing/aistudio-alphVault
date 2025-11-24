@@ -1,3 +1,4 @@
+
 export enum AssetClass {
   HK_STOCKS = 'HK Stocks',
   A_SHARES = 'A-Shares',
@@ -26,6 +27,11 @@ export interface PortfolioItem {
   pnl: number;
   pnlPercent: number;
   lastUpdated?: number;
+  
+  // Risk Management Fields
+  stopLoss?: number;
+  targetPrice?: number;
+  strategyTag?: string;
 }
 
 export interface WatchlistItem {
@@ -43,8 +49,29 @@ export interface WatchlistItem {
   lastUpdated: number; // Timestamp
 }
 
+export interface QuantitativeMetrics {
+  symbol: string;
+  currentPrice: number;
+  ma20: number;
+  maDeviation: number; // % distance from MA20
+  volatility: number; // Annualized Volatility %
+  trendStrength: number; // 0-100
+  regimeType: string;
+  
+  // Professional Technical Indicators
+  rsi: number;
+  macd: number;        // MACD Line
+  macdSignal: number;  // Signal Line
+  macdHistogram: number; 
+  bollingerUpper: number;
+  bollingerLower: number;
+  bollingerBandwidth: number; // (Upper - Lower) / Middle * 100
+}
+
 export interface MarketStateAnalysis {
-  regime: string;
+  id?: string;
+  timestamp?: number;
+  regime: string; // "High Volatility Bull", "Low Volatility Bear" etc.
   trend: 'Bullish' | 'Bearish' | 'Neutral' | 'Volatile';
   confidence: number;
   reasoning: string;
@@ -54,6 +81,8 @@ export interface MarketStateAnalysis {
     commodities: number;
     cash: number;
   };
+  metrics?: QuantitativeMetrics;
+  chartData?: any[]; // For storing snapshot of KLine
 }
 
 export interface StrategyRecommendation {
@@ -80,14 +109,28 @@ export interface TradePlan {
 }
 
 export interface ActionItem {
+  id: string;
   action: 'BUY' | 'SELL' | 'HOLD' | 'REBALANCE';
-  asset: string;
-  quantity?: string; // e.g. "100 shares" or "10% of position"
+  asset: string; // Display Name
+  ticker: string; // Stock Symbol for execution (e.g. 0700.HK)
+  quantity: string; // Text description (e.g. "10%")
+  estimatedValue: number; // Numeric value for execution logic
   reason: string;
   urgency: 'High' | 'Medium' | 'Low';
+  status: 'Pending' | 'Executed' | 'Failed';
+  
+  // New Professional Fields
+  strategyTag?: string; // e.g. "Trend Breakout", "Mean Reversion"
+  entryLow?: number;
+  entryHigh?: number;
+  targetPrice?: number;
+  stopLoss?: number;
+  riskRewardRatio?: number;
 }
 
 export interface HolisticAdvice {
+  id: string;
+  timestamp: number;
   summary: string;
   marketContext: string;
   actions: ActionItem[];

@@ -1,13 +1,13 @@
+
 import React from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
-import { MOCK_PERFORMANCE_DATA } from '../constants';
 import { TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw, Zap } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 const Dashboard: React.FC = () => {
-  const { t, portfolio, totalValue, totalPnL, refreshPortfolioPrices, isRefreshing, lastUpdated } = useApp();
+  const { t, portfolio, totalValue, totalPnL, refreshPortfolioPrices, isRefreshing, lastUpdated, valueHistory } = useApp();
   
   const assetAllocation = portfolio.map(item => ({
     name: item.assetClass,
@@ -20,6 +20,9 @@ const Dashboard: React.FC = () => {
     acc[item.name].value += item.value;
     return acc;
   }, {}));
+
+  // Fallback for empty history (show at least current point)
+  const chartData = valueHistory.length > 0 ? valueHistory : [{ date: 'Today', value: totalValue }];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -47,7 +50,7 @@ const Dashboard: React.FC = () => {
         <Card 
           title={t('totalNetWorth')} 
           value={`$${Math.floor(totalValue).toLocaleString()}`} 
-          subValue={`+12.5% ${t('ytd')}`} 
+          subValue={`+${Math.floor(totalPnL).toLocaleString()} ${t('totalPnL')}`} 
           icon={DollarSign} 
           trend="up"
         />
@@ -79,10 +82,10 @@ const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-100 mb-6">{t('performanceVsTarget')}</h3>
+          <h3 className="text-lg font-semibold text-slate-100 mb-6">{t('portfolioValueChart')}</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={MOCK_PERFORMANCE_DATA}>
+              <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
@@ -90,14 +93,20 @@ const Dashboard: React.FC = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                <XAxis dataKey="month" stroke="#94a3b8" tickLine={false} axisLine={false} />
-                <YAxis stroke="#94a3b8" tickLine={false} axisLine={false} tickFormatter={(val) => `$${val/1000}k`} />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#94a3b8" 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickFormatter={(str) => str.length > 5 ? str.slice(5) : str} 
+                />
+                <YAxis stroke="#94a3b8" tickLine={false} axisLine={false} tickFormatter={(val) => `$${val/1000}k`} domain={['auto', 'auto']} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
                   itemStyle={{ color: '#e2e8f0' }}
+                  formatter={(value: any) => [`$${Math.floor(value).toLocaleString()}`, 'Value']}
                 />
                 <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" name={t('portfolioValueChart')} />
-                <Line type="monotone" dataKey="target" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" dot={false} name={t('growthTarget')} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -105,7 +114,7 @@ const Dashboard: React.FC = () => {
 
         <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-sm flex flex-col">
           <h3 className="text-lg font-semibold text-slate-100 mb-2">{t('assetAllocation')}</h3>
-          <div className="flex-1 min-h-[250px] relative">
+          <div className="h-[250px] w-full relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -121,10 +130,9 @@ const Dashboard: React.FC = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px' }} formatter={(val: number) => `$${Math.floor(val).toLocaleString()}`} />
               </PieChart>
             </ResponsiveContainer>
-            {/* Center Text Overlay */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                <div className="text-center">
                  <span className="block text-slate-400 text-xs">{t('totalAssets')}</span>

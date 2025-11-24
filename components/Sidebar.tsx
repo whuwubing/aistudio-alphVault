@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { LayoutDashboard, LineChart, ShieldAlert, Wallet, BrainCircuit, Target, Lightbulb } from 'lucide-react';
+import { LayoutDashboard, LineChart, ShieldAlert, Wallet, BrainCircuit, Target, Lightbulb, Settings } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 interface SidebarProps {
@@ -18,6 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView }) => {
     { id: 'strategy', icon: LineChart, label: t('strategyCenter') },
     { id: 'risk', icon: ShieldAlert, label: t('riskManager') },
     { id: 'portfolio', icon: Wallet, label: t('portfolio') },
+    { id: 'settings', icon: Settings, label: t('settings') },
   ];
 
   return (

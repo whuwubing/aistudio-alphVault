@@ -1,15 +1,23 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { generateStrategy } from '../services/geminiService';
 import { AssetClass, StrategyRecommendation } from '../types';
 import { Lightbulb, Loader2, Target, LogIn, LogOut, Shield } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 
 const StrategyAdvisor: React.FC = () => {
-  const { t, language } = useApp();
+  const { t, language, marketRegimeContext } = useApp();
   const [selectedAsset, setSelectedAsset] = useState<AssetClass>(AssetClass.HK_STOCKS);
   const [marketCondition, setMarketCondition] = useState('');
   const [loading, setLoading] = useState(false);
   const [strategy, setStrategy] = useState<StrategyRecommendation | null>(null);
+
+  // Auto-fill context from Market Classifier if available
+  useEffect(() => {
+    if (marketRegimeContext) {
+        setMarketCondition(marketRegimeContext);
+    }
+  }, [marketRegimeContext]);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -56,6 +64,11 @@ const StrategyAdvisor: React.FC = () => {
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none placeholder:text-slate-600"
                 placeholder={t('marketContextPlaceholder')}
               />
+              {marketRegimeContext && (
+                  <p className="text-xs text-emerald-400 mt-1">
+                      * Auto-filled from Market Classifier
+                  </p>
+              )}
             </div>
 
             <button

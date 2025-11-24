@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -7,6 +8,7 @@ import RiskCalculator from './components/RiskCalculator';
 import Portfolio from './components/Portfolio';
 import TargetPool from './components/TargetPool';
 import InvestmentAdvisor from './components/InvestmentAdvisor';
+import Settings from './components/Settings';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { Globe } from 'lucide-react';
 
@@ -30,6 +32,8 @@ const AppContent: React.FC = () => {
         return <RiskCalculator />;
       case 'portfolio':
         return <Portfolio />;
+      case 'settings':
+        return <Settings />;
       default:
         return <Dashboard />;
     }
@@ -44,6 +48,7 @@ const AppContent: React.FC = () => {
       case 'strategy': return t('strategyCenter');
       case 'risk': return t('riskManager');
       case 'portfolio': return t('portfolio');
+      case 'settings': return t('dataManagement');
       default: return t('dashboard');
     }
   };

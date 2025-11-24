@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { analyzeTradeRisk } from '../services/geminiService';
 import { TradePlan } from '../types';
@@ -60,7 +61,7 @@ const RiskCalculator: React.FC = () => {
                 <input type="number" name="entry" value={formData.entry} onChange={handleChange} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">{t('stopLoss')}</label>
+                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">{t('stopLossPrice')}</label>
                 <input type="number" name="stop" value={formData.stop} onChange={handleChange} className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-red-300 focus:border-red-500 outline-none" />
               </div>
               <div>

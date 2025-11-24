@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { AssetClass, PortfolioItem } from '../types';
 import { useApp } from '../contexts/AppContext';
-import { Plus, Trash2, X, Check, Loader2, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, X, Check, Loader2, RefreshCw, Tag, Target, ShieldAlert } from 'lucide-react';
 import { searchAssetDetails } from '../services/geminiService';
 
 const Portfolio: React.FC = () => {
@@ -12,6 +13,8 @@ const Portfolio: React.FC = () => {
   const [symbol, setSymbol] = useState('');
   const [quantity, setQuantity] = useState('');
   const [cost, setCost] = useState('');
+  const [stopLoss, setStopLoss] = useState('');
+  const [targetPrice, setTargetPrice] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   
   const handleAdd = async () => {
@@ -33,7 +36,11 @@ const Portfolio: React.FC = () => {
         marketValue: Number(quantity) * (details.currentPrice || Number(cost)),
         pnl: 0, // Will update on refresh
         pnlPercent: 0,
-        lastUpdated: Date.now()
+        lastUpdated: Date.now(),
+        // Optional Risk Params
+        stopLoss: stopLoss ? Number(stopLoss) : undefined,
+        targetPrice: targetPrice ? Number(targetPrice) : undefined,
+        strategyTag: 'Manual'
       };
       
       addPortfolioItem(newItem);
@@ -41,6 +48,8 @@ const Portfolio: React.FC = () => {
       setSymbol('');
       setQuantity('');
       setCost('');
+      setStopLoss('');
+      setTargetPrice('');
     } catch (e) {
       alert("Failed to verify asset symbol. Please try again.");
     } finally {
@@ -89,7 +98,8 @@ const Portfolio: React.FC = () => {
                   <th className="p-4 font-semibold">{t('class')}</th>
                   <th className="p-4 font-semibold text-right">{t('quantity')}</th>
                   <th className="p-4 font-semibold text-right">{t('avgPrice')}</th>
-                  <th className="p-4 font-semibold text-right">{t('currentPrice')}</th>
+                  <th className="p-4 font-semibold text-right">{t('livePrice')}</th>
+                  <th className="p-4 font-semibold text-right">{t('riskTargets')}</th>
                   <th className="p-4 font-semibold text-right">{t('marketValue')}</th>
                   <th className="p-4 font-semibold text-right">{t('pnl')}</th>
                   <th className="p-4 font-semibold text-right"></th>
@@ -101,6 +111,11 @@ const Portfolio: React.FC = () => {
                     <td className="p-4">
                       <div className="font-medium text-white">{item.symbol}</div>
                       <div className="text-slate-500 text-xs truncate max-w-[150px]">{item.name}</div>
+                      {item.strategyTag && (
+                          <span className="inline-flex items-center text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded mt-1 border border-purple-500/20">
+                              <Tag size={8} className="mr-1"/> {item.strategyTag}
+                          </span>
+                      )}
                     </td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -112,10 +127,26 @@ const Portfolio: React.FC = () => {
                         {item.assetClass}
                       </span>
                     </td>
-                    <td className="p-4 text-right text-slate-300">{item.quantity}</td>
+                    <td className="p-4 text-right text-slate-300">{item.quantity.toLocaleString()}</td>
                     <td className="p-4 text-right text-slate-300">${item.avgPrice.toLocaleString()}</td>
                     <td className="p-4 text-right text-slate-200 font-medium font-mono">
                       ${item.currentPrice.toFixed(2)}
+                    </td>
+                    <td className="p-4 text-right">
+                        {item.assetClass !== AssetClass.CASH && (
+                            <div className="flex flex-col items-end gap-1 text-[10px]">
+                                {item.targetPrice ? (
+                                    <span className={`flex items-center px-1.5 rounded border ${item.currentPrice >= item.targetPrice ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-slate-800 text-emerald-400 border-slate-600'}`}>
+                                        <Target size={8} className="mr-1"/> {item.targetPrice.toFixed(2)}
+                                    </span>
+                                ) : <span className="text-slate-600">-</span>}
+                                {item.stopLoss ? (
+                                    <span className={`flex items-center px-1.5 rounded border ${item.currentPrice <= item.stopLoss ? 'bg-red-500 text-white border-red-500' : 'bg-slate-800 text-red-400 border-slate-600'}`}>
+                                        <ShieldAlert size={8} className="mr-1"/> {item.stopLoss.toFixed(2)}
+                                    </span>
+                                ) : <span className="text-slate-600">-</span>}
+                            </div>
+                        )}
                     </td>
                     <td className="p-4 text-right text-slate-200 font-bold">${Math.floor(item.marketValue).toLocaleString()}</td>
                     <td className={`p-4 text-right font-medium ${item.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -179,6 +210,32 @@ const Portfolio: React.FC = () => {
                     className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-blue-500"
                   />
                 </div>
+              </div>
+              
+              <div className="border-t border-slate-700 pt-4 mt-2">
+                 <div className="text-xs font-bold text-slate-500 uppercase mb-2">{t('riskParams')} (Optional)</div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">{t('stopLossPrice')}</label>
+                      <input 
+                        type="number"
+                        value={stopLoss}
+                        onChange={(e) => setStopLoss(e.target.value)}
+                        placeholder="Price"
+                        className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-red-400 outline-none focus:border-red-500 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">{t('targetPrice')}</label>
+                      <input 
+                        type="number"
+                        value={targetPrice}
+                        onChange={(e) => setTargetPrice(e.target.value)}
+                        placeholder="Price"
+                        className="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-emerald-400 outline-none focus:border-emerald-500 text-sm"
+                      />
+                    </div>
+                 </div>
               </div>
 
               <button 
